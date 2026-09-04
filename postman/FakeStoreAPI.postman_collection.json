@@ -1,0 +1,234 @@
+{
+  "info": {
+    "name": "Fake Store API - QA Test Suite",
+    "description": "API test collection covering CRUD operations, filtering, and auth for the Fake Store API (fakestoreapi.com). Built as part of a QA automation portfolio project alongside a Playwright UI suite for automationexercise.com.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "baseUrl",
+      "value": "https://fakestoreapi.com"
+    }
+  ],
+  "item": [
+    {
+      "name": "GET all products",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/products"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response is an array of products', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json).to.be.an('array');",
+              "    pm.expect(json.length).to.be.above(0);",
+              "});",
+              "",
+              "pm.test('Each product has required fields', function () {",
+              "    const json = pm.response.json();",
+              "    const first = json[0];",
+              "    pm.expect(first).to.have.property('id');",
+              "    pm.expect(first).to.have.property('title');",
+              "    pm.expect(first).to.have.property('price');",
+              "    pm.expect(first).to.have.property('category');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET single product by ID",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/products/1"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Returned product has id 1', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.id).to.eql(1);",
+              "});",
+              "",
+              "pm.test('Response has expected schema', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json).to.have.all.keys('id', 'title', 'price', 'description', 'category', 'image', 'rating');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "GET products by category",
+      "request": {
+        "method": "GET",
+        "url": "{{baseUrl}}/products/category/jewelery"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('All returned products belong to jewelery category', function () {",
+              "    const json = pm.response.json();",
+              "    json.forEach(function (product) {",
+              "        pm.expect(product.category).to.eql('jewelery');",
+              "    });",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST create new product",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/products",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"QA Test Product\",\n  \"price\": 19.99,\n  \"description\": \"Product created via automated API test\",\n  \"image\": \"https://example.com/image.jpg\",\n  \"category\": \"electronics\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Created product echoes submitted title', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.title).to.eql('QA Test Product');",
+              "});",
+              "",
+              "pm.test('Created product has an id assigned', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json).to.have.property('id');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "PUT update a product",
+      "request": {
+        "method": "PUT",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/products/1",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"title\": \"Updated QA Test Product\",\n  \"price\": 29.99,\n  \"description\": \"Updated via automated API test\",\n  \"image\": \"https://example.com/image.jpg\",\n  \"category\": \"electronics\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response reflects updated title', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.title).to.eql('Updated QA Test Product');",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "DELETE a product",
+      "request": {
+        "method": "DELETE",
+        "url": "{{baseUrl}}/products/1"
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Deleted product response includes original id', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json.id).to.eql(1);",
+              "});"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "POST login (auth token)",
+      "request": {
+        "method": "POST",
+        "header": [
+          { "key": "Content-Type", "value": "application/json" }
+        ],
+        "url": "{{baseUrl}}/auth/login",
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"username\": \"mor_2314\",\n  \"password\": \"83r5^_\"\n}"
+        }
+      },
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "type": "text/javascript",
+            "exec": [
+              "pm.test('Status code is 200', function () {",
+              "    pm.response.to.have.status(200);",
+              "});",
+              "",
+              "pm.test('Response returns an auth token', function () {",
+              "    const json = pm.response.json();",
+              "    pm.expect(json).to.have.property('token');",
+              "    pm.expect(json.token).to.be.a('string');",
+              "});"
+            ]
+          }
+        }
+      ]
+    }
+  ]
+}

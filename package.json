@@ -1,0 +1,17 @@
+{
+  "name": "qa-automation-project",
+  "version": "1.0.0",
+  "description": "Playwright UI automation + Postman API testing project for automationexercise.com and Fake Store API",
+  "main": "index.js",
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:report": "playwright show-report"
+  },
+  "keywords": ["playwright", "qa-automation", "testing", "postman"],
+  "author": "Gbadebo Oluwaseunfunmi Isaac",
+  "license": "ISC",
+  "devDependencies": {
+    "@playwright/test": "^1.62.1"
+  }
+}
