@@ -26,6 +26,9 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install --with-deps chromium
 
+      - name: Check site reachability
+        run: curl -I https://automationexercise.com
+
       - name: Run Playwright tests
         run: npx playwright test
 
