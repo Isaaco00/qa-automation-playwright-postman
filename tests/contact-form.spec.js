@@ -1,14 +1,15 @@
 const { test, expect } = require('@playwright/test');
-const path = require('path');
+const { openPracticePage } = require('./helpers/navigation');
+const { randomUUID } = require('node:crypto');
 
 test.describe('Contact Us Form', () => {
   test('user can submit the contact form with valid details', async ({ page }) => {
-    await page.goto('/contact_us', { waitUntil: 'domcontentloaded' });
+    await openPracticePage(page, '/contact_us');
 
     await expect(page.getByText('Get In Touch')).toBeVisible();
 
     await page.fill('input[data-qa="name"]', 'QA Test User');
-    await page.fill('input[data-qa="email"]', 'qa.test.contact@example.com');
+    await page.fill('input[data-qa="email"]', `qa.test.contact.${randomUUID()}@example.com`);
     await page.fill('input[data-qa="subject"]', 'Automated test submission');
     await page.fill(
       'textarea[data-qa="message"]',
@@ -26,11 +27,30 @@ test.describe('Contact Us Form', () => {
   });
 
   test('submitting the contact form with missing required fields shows validation', async ({ page }) => {
-    await page.goto('/contact_us', { waitUntil: 'domcontentloaded' });
+    await openPracticePage(page, '/contact_us');
+
+    const emailInput = page.locator('input[data-qa="email"]');
+
+    // The live form marks email as its required field.
+    await expect(emailInput).toHaveAttribute('type', 'email');
+    expect(
+      await emailInput.evaluate(input => input.required)
+    ).toBe(true);
+
+    const initialValidity = await emailInput.evaluate(input => ({
+      valid: input.checkValidity(),
+      valueMissing: input.validity.valueMissing,
+    }));
+
+    expect(initialValidity).toEqual({
+      valid: false,
+      valueMissing: true,
+    });
 
     await page.click('input[data-qa="submit-button"]');
 
-    // Should remain on the contact page since required fields are empty
+    // Native browser validation should focus the missing required field.
+    await expect(emailInput).toBeFocused();
     await expect(page).toHaveURL(/\/contact_us/);
   });
 });

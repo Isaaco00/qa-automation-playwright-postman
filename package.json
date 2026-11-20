@@ -6,9 +6,17 @@
   "scripts": {
     "test": "playwright test",
     "test:headed": "playwright test --headed",
-    "test:report": "playwright show-report"
+    "test:report": "playwright show-report",
+    "pretest:api": "node -e \"require('fs').mkdirSync('test-results', { recursive: true })\"",
+    "test:api": "postman collection run postman/FakeStoreAPI.postman_collection.json --reporters cli,junit,html --reporter-junit-export test-results/postman-results.xml --reporter-html-export test-results/postman-api-report.html --reporter-html-omitHeaders --reporter-html-omitRequestBodies --reporter-html-omitResponseBodies --report-events=false",
+    "test:all": "npm test && npm run test:api"
   },
-  "keywords": ["playwright", "qa-automation", "testing", "postman"],
+  "keywords": [
+    "playwright",
+    "qa-automation",
+    "testing",
+    "postman"
+  ],
   "author": "Gbadebo Oluwaseunfunmi Isaac",
   "license": "ISC",
   "devDependencies": {

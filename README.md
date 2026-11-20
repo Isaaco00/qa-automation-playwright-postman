@@ -1,111 +1,188 @@
-# QA Automation Project — Playwright + Postman + CI
+# QA Automation Project
 
-An end-to-end QA automation portfolio project combining UI test automation, API testing, and continuous integration.
+A portfolio project demonstrating UI automation, REST API testing, and continuous integration using Playwright, Postman CLI, and GitHub Actions.
 
 **Developer:** Gbadebo Oluwaseunfunmi Isaac
 
 ## Overview
 
-This project demonstrates a full QA automation workflow across two layers of an application:
+The project tests two publicly available demonstration services:
 
-- **UI testing** with Playwright against [automationexercise.com](https://automationexercise.com), a public site built for QA practice
-- **API testing** with Postman against the [Fake Store API](https://fakestoreapi.com), a public REST API for e-commerce data
+- **UI automation:** Playwright against [Automation Exercise](https://automationexercise.com).
+- **API testing:** A Postman collection against [Fake Store API](https://fakestoreapi.com).
 
-Tests run automatically on every push via GitHub Actions CI.
+Both test suites are configured to run through GitHub Actions.
 
-## What's Tested
+## Playwright Test Coverage
 
-### Playwright (UI) — 8 test scenarios across 6 suites
+**28 Playwright tests across 8 files: 13 browser end-to-end tests, 9 navigation-helper regression tests, and 6 disposable-account cleanup regression tests.**
 
-| Suite | Scenarios |
+| Suite | Tests | Coverage |
+|---|---:|---|
+| Homepage | 2 | Page loading, navigation, featured products |
+| Login | 3 | Form rendering, invalid credentials, empty-field validation |
+| Signup | 2 | Initial signup flow, duplicate-email rejection |
+| Product Search | 2 | Matching results, unsuccessful searches |
+| Shopping Cart | 2 | Adding and removing products |
+| Contact Form | 2 | Valid submission, required-field validation |
+| **Total** | **13** | |
+
+The initial signup test verifies progression to the account-information step; it does not complete registration.
+
+The duplicate-signup test creates a disposable account through the practice site's API, attempts registration with the same email through the browser, verifies the duplicate-email message, deletes the account, and verifies that it can no longer authenticate.
+
+### Navigation-helper regression tests
+
+Nine isolated tests cover successful navigation, temporary HTTP and network failures, queue-full recovery, permanent-error handling, retry exhaustion, and click-navigation recovery.
+
+These tests validate the helper independently; they are not additional application end-to-end scenarios. The implementation is in `tests/helpers/navigation.js` and its tests are in `tests/helpers/navigation.spec.js`.
+
+### Disposable-account cleanup regression tests
+
+Six isolated tests cover successful deletion, ambiguous DELETE timeouts, deletion retries when an account still exists, already-absent accounts, and unresolved cleanup failures. These tests verify that disposable accounts are independently checked for absence after cleanup. The implementation is in `tests/helpers/account-cleanup.js` and its tests are in `tests/helpers/account-cleanup.spec.js`.
+
+## Postman API Test Coverage
+
+**7 requests and 17 Postman test assertions.**
+
+| Request | Coverage |
 |---|---|
-| Homepage | Page load and key navigation elements, features section visibility |
-| Login | Login/signup forms render, invalid credentials show error, empty-field validation |
-| Signup | New user reaches account info step, duplicate email handled gracefully |
-| Product Search | Search returns matching results, nonsense search handled gracefully |
-| Cart | Add product to cart, remove product from cart |
-| Contact Form | Valid submission succeeds, missing fields blocked by validation |
+| GET all products | Status, array response, required fields |
+| GET single product | Status, product ID, response structure |
+| GET products by category | Status and category matching |
+| POST create product | Status, submitted title, assigned ID |
+| PUT update product | Status and updated response fields |
+| DELETE product | Status and returned product ID |
+| POST login | Status and authentication token |
 
-Covers positive paths, negative paths (invalid login, empty forms), and edge cases (duplicate signup, no search results) — not just the "happy path."
+### API limitations
 
-### Postman (API) — 7 requests covering full CRUD + auth
+Fake Store API is a demonstration service. Its POST, PUT, and DELETE operations return simulated responses and do not establish persistent database changes. These tests therefore validate API responses, not persistent data modification.
 
-| Request | What's Validated |
+The login endpoint currently returns `201 Created`, although `200 OK` is the expected status for successful authentication. This behaviour is recorded in [upstream issue #167](https://github.com/keikaavousi/fake-store-api/issues/167). The collection currently asserts the observed `201` response and should be revisited if the provider corrects it.
+
+## Technology Stack
+
+| Technology | Purpose |
 |---|---|
-| GET all products | Status 200, response is an array, required fields present |
-| GET single product | Status 200, correct ID returned, full schema validated |
-| GET products by category | Status 200, all results match requested category |
-| POST create product | Status 200, submitted data echoed back, ID assigned |
-| PUT update product | Status 200, updated fields reflected in response |
-| DELETE product | Status 200, deleted resource ID confirmed |
-| POST login (auth) | Status 200, auth token returned in expected format |
-
-## Tech Stack
-
-- **Playwright** (v1.62.1) — browser automation
-- **JavaScript** — test scripting
-- **Postman** — API testing and collections
-- **GitHub Actions** — CI pipeline
-- **Node.js / npm** — project tooling
+| JavaScript | Test scripting |
+| Node.js | Runtime |
+| Playwright 1.62.1 | Browser automation |
+| Postman | API collection authoring |
+| Postman CLI 1.91.0 | API collection execution |
+| GitHub Actions | Continuous integration |
+| npm | Dependency management |
 
 ## Project Structure
 
-```
-qa-automation-project/
-├── tests/
-│   ├── homepage.spec.js
-│   ├── login.spec.js
-│   ├── signup.spec.js
-│   ├── search.spec.js
-│   ├── cart.spec.js
-│   └── contact-form.spec.js
-├── postman/
-│   └── FakeStoreAPI.postman_collection.json
-├── .github/workflows/
-│   └── playwright.yml
-├── playwright.config.js
-├── package.json
-└── README.md
-```
+    qa-automation-project/
+    ├── tests/
+    │   ├── helpers/
+    │   │   ├── account-cleanup.js
+    │   │   ├── account-cleanup.spec.js
+    │   │   ├── navigation.js
+    │   │   └── navigation.spec.js
+    │   ├── homepage.spec.js
+    │   ├── login.spec.js
+    │   ├── signup.spec.js
+    │   ├── search.spec.js
+    │   ├── cart.spec.js
+    │   └── contact-form.spec.js
+    ├── postman/
+    │   └── FakeStoreAPI.postman_collection.json
+    ├── .github/
+    │   └── workflows/
+    │       └── playwright.yml
+    ├── playwright.config.js
+    ├── package.json
+    ├── package-lock.json
+    └── README.md
 
-## Running the Tests
+## Getting Started
 
-### Playwright (UI tests)
+### Requirements
 
-```bash
-npm install
-npx playwright install
-npm test
-```
+- Node.js 22.x, 24.x, or 26.x (Playwright 1.62.1 supported versions). This project was locally verified on Node.js 24.14.0; CI uses Node.js 26.
+- npm
+- Internet connectivity
+- Postman CLI for API tests
 
-View the HTML report after a run:
+Clone the repository:
 
-```bash
-npm run test:report
-```
+    git clone https://github.com/Isaaco00/qa-automation-playwright-postman.git
+    cd qa-automation-playwright-postman
 
-### Postman (API tests)
+Install project dependencies:
 
-1. Open Postman
-2. Import `postman/FakeStoreAPI.postman_collection.json`
-3. Run the collection via the Collection Runner, or use the Postman CLI:
+    npm ci
 
-```bash
-npm install -g newman
-newman run postman/FakeStoreAPI.postman_collection.json
-```
+Install the Playwright Chromium browser:
+
+    npx playwright install chromium
+
+## Running Tests
+
+Run all Playwright tests:
+
+    npm test
+
+Run Playwright in headed mode:
+
+    npm run test:headed
+
+Open the Playwright HTML report:
+
+    npm run test:report
+
+### Postman API tests
+
+Install the tested Postman CLI version:
+
+    npm install --global postman-cli@1.91.0
+
+Execute the API collection:
+
+    npm run test:api
+
+The command generates:
+
+- `test-results/postman-results.xml` — JUnit report.
+- `test-results/postman-api-report.html` — HTML report.
+
+No Postman Cloud login is required for this local collection run.
+
+### Run both suites
+
+    npm run test:all
+
+This executes Playwright first and Postman second.
 
 ## Continuous Integration
 
-Every push to `main` (and every pull request) automatically:
-1. Installs dependencies
-2. Installs the Playwright browser binaries
-3. Runs the full UI test suite
-4. Uploads the HTML test report as a build artifact
+The workflow is located at `.github/workflows/playwright.yml`.
 
-See `.github/workflows/playwright.yml` for the full pipeline. Check the **Actions** tab on GitHub to view run history and results.
+It is configured for:
 
-## Notes
+- Pushes to `main`.
+- Pull requests targeting `main`.
+- Manual workflow dispatch.
 
-- Tests target publicly available demo/practice sites (automationexercise.com, fakestoreapi.com) chosen specifically because they're stable and built for this kind of testing practice, so the suite won't break due to real product changes.
-- The signup "duplicate email" test is written defensively to pass whether or not the test email has been previously registered, since the site's demo data isn't cleared between runs.
+The workflow installs project dependencies, installs Postman CLI and Playwright Chromium, executes both test suites, and uploads their reports as GitHub Actions artifacts.
+
+The CI runtime is configured for Node.js 26.
+
+## Dependency Security
+
+Check project dependencies using:
+
+    npm audit
+
+The audit covers dependencies recorded in the project lockfile. Globally installed tools, including Postman CLI, are outside that audit.
+
+## Important Limitations
+
+- Both testing targets are public demonstration services, not production applications controlled by this project.
+- Their availability and behaviour can change independently of this repository.
+- Fake Store API write operations are simulated rather than persistent.
+- Its login endpoint currently has a documented HTTP-status deviation.
+- Successful local test runs do not establish production-system reliability or security.

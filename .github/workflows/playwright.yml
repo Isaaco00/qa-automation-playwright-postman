@@ -1,41 +1,74 @@
-name: Playwright Tests
+name: QA Automation CI
 
 on:
   push:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
-    timeout-minutes: 15
+    name: UI and API tests
     runs-on: ubuntu-latest
+    timeout-minutes: 20
 
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v7
 
       - name: Set up Node.js
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v7
         with:
-          node-version: '20'
+          node-version: 26
+          cache: npm
 
-      - name: Install dependencies
+      - name: Install project dependencies
+        id: install-dependencies
         run: npm ci
 
-      - name: Install Playwright browsers
+      - name: Install Postman CLI
+        id: install-postman-cli
+        run: npm install --global postman-cli@1.91.0
+
+      - name: Verify Postman CLI
+        id: verify-postman-cli
+        run: postman --version
+
+      - name: Install Playwright Chromium
+        if: ${{ !cancelled() && steps.install-dependencies.outcome == 'success' }}
+        id: install-browsers
         run: npx playwright install --with-deps chromium
 
-      - name: Check site reachability
-        run: curl -I https://automationexercise.com
+      - name: Run Playwright UI tests
+        if: ${{ !cancelled() && steps.install-dependencies.outcome == 'success' && steps.install-browsers.outcome == 'success' }}
+        run: npm test
 
-      - name: Run Playwright tests
-        run: npx playwright test
+      - name: Run Postman API tests
+        if: ${{ !cancelled() && steps.install-dependencies.outcome == 'success' && steps.verify-postman-cli.outcome == 'success' }}
+        run: npm run test:api
 
-      - name: Upload HTML report
-        uses: actions/upload-artifact@v4
-        if: always()
+      - name: Upload Playwright HTML report
+        if: ${{ always() && !cancelled() }}
+        uses: actions/upload-artifact@v7
         with:
-          name: playwright-report
+          name: playwright-html-report
           path: playwright-report/
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Upload Postman API reports
+        if: ${{ always() && !cancelled() }}
+        uses: actions/upload-artifact@v7
+        with:
+          name: postman-api-reports
+          path: test-results/
+          if-no-files-found: warn
           retention-days: 14

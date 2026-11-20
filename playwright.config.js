@@ -3,15 +3,15 @@ const { defineConfig, devices } = require('@playwright/test');
 
 module.exports = defineConfig({
   testDir: './tests',
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 2 : 1,
-  workers: process.env.CI ? 1 : 3,
-  timeout: 60000,
+  retries: 0,
+  workers: 1,
+  timeout: 90000,
   reporter: [['html', { open: 'never' }], ['list']],
   use: {
     baseURL: 'https://automationexercise.com',
-    trace: 'on-first-retry',
+    trace: 'retain-on-failure',
     screenshot: 'only-on-failure',
     navigationTimeout: 45000,
     actionTimeout: 15000,

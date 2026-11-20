@@ -1,15 +1,16 @@
 const { test, expect } = require('@playwright/test');
+const { openPracticePage } = require('./helpers/navigation');
 
 test.describe('Login', () => {
   test('login page loads with both login and signup forms', async ({ page }) => {
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
+    await openPracticePage(page, '/login');
 
     await expect(page.locator('.login-form')).toBeVisible();
     await expect(page.locator('.signup-form')).toBeVisible();
   });
 
   test('shows an error message when logging in with invalid credentials', async ({ page }) => {
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
+    await openPracticePage(page, '/login');
 
     await page.fill('input[data-qa="login-email"]', 'not-a-real-user@example.com');
     await page.fill('input[data-qa="login-password"]', 'WrongPassword123');
@@ -20,13 +21,41 @@ test.describe('Login', () => {
     ).toBeVisible();
   });
 
-  test('shows validation when submitting login form with empty fields', async ({ page }) => {
-    await page.goto('/login', { waitUntil: 'domcontentloaded' });
+  test('blocks login submission when required fields are empty', async ({ page }) => {
+    await openPracticePage(page, '/login');
 
-    await page.click('button[data-qa="login-button"]');
+    const emailInput = page.locator('input[data-qa="login-email"]');
+    const passwordInput = page.locator('input[data-qa="login-password"]');
 
-    // Browser-native required-field validation should block submission;
-    // we confirm we're still on the login page rather than navigated away.
+    // Verify both fields are required by the actual HTML form.
+    expect(await emailInput.evaluate(input => input.required)).toBe(true);
+    expect(await passwordInput.evaluate(input => input.required)).toBe(true);
+
+    // Verify both fields fail native browser validation while empty.
+    const emailValidity = await emailInput.evaluate(input => ({
+      valid: input.checkValidity(),
+      valueMissing: input.validity.valueMissing,
+    }));
+
+    const passwordValidity = await passwordInput.evaluate(input => ({
+      valid: input.checkValidity(),
+      valueMissing: input.validity.valueMissing,
+    }));
+
+    expect(emailValidity).toEqual({
+      valid: false,
+      valueMissing: true,
+    });
+
+    expect(passwordValidity).toEqual({
+      valid: false,
+      valueMissing: true,
+    });
+
+    await page.locator('button[data-qa="login-button"]').click();
+
+    // The browser should focus the first invalid field and block submission.
+    await expect(emailInput).toBeFocused();
     await expect(page).toHaveURL(/\/login/);
   });
 });
